@@ -41,6 +41,7 @@ public class SimpleClassificationEvaluatorTest extends AbstractTestBase {
             Row.of(1.0, 0.0)); // fn
 
     private static final double[] EXPECTED_DATA =
+//            new double[] {0.555555, 0.714285, 0.714285, 0.714285};
             new double[] {0.666666, 0.714285, 0.714285, 0.714285};
     private static final double EPS = 1.0e-5;
 
@@ -71,17 +72,17 @@ public class SimpleClassificationEvaluatorTest extends AbstractTestBase {
                     SimpleClassificationEvaluatorParams.F1_SCORE);
         Table evalResult = eval.transform(inputDataTable)[0];
         List<Row> results = IteratorUtils.toList(evalResult.execute().collect());
-//        assertArrayEquals(
-//            new String[] {
-//                SimpleClassificationEvaluatorParams.ACURRACY,
-//                SimpleClassificationEvaluatorParams.PRECISION,
-//                SimpleClassificationEvaluatorParams.RECALL,
-//                SimpleClassificationEvaluatorParams.F1_SCORE},
-//            evalResult.getResolvedSchema().getColumnNames().toArray());
-//        Row result = results.get(0);
-//        for (int i = 0; i < EXPECTED_DATA.length; ++i) {
-//            assertEquals(EXPECTED_DATA[i], result.getFieldAs(i), EPS);
-//        }
+        assertArrayEquals(
+            new String[] {
+                SimpleClassificationEvaluatorParams.ACURRACY,
+                SimpleClassificationEvaluatorParams.PRECISION,
+                SimpleClassificationEvaluatorParams.RECALL,
+                SimpleClassificationEvaluatorParams.F1_SCORE},
+            evalResult.getResolvedSchema().getColumnNames().toArray());
+        Row result = results.get(0);
+        for (int i = 0; i < EXPECTED_DATA.length; ++i) {
+            assertEquals(EXPECTED_DATA[i], result.getFieldAs(i), EPS);
+        }
     }
 
 //    @Test

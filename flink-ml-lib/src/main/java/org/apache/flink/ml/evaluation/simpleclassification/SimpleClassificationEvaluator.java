@@ -1,48 +1,31 @@
 package org.apache.flink.ml.evaluation.simpleclassification;
 
-import org.apache.commons.collections.IteratorUtils;
 import org.apache.flink.api.common.functions.*;
-import org.apache.flink.api.common.state.ListState;
-import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.iteration.operator.OperatorStateUtils;
 import org.apache.flink.ml.api.AlgoOperator;
-import org.apache.flink.ml.common.broadcast.BroadcastUtils;
 import org.apache.flink.ml.common.datastream.DataStreamUtils;
-import org.apache.flink.ml.evaluation.binaryclassification.BinaryClassificationEvaluator;
-import org.apache.flink.ml.linalg.Vector;
 import org.apache.flink.ml.param.Param;
 import org.apache.flink.ml.util.ParamUtils;
 import org.apache.flink.ml.util.ReadWriteUtils;
-import org.apache.flink.runtime.state.StateInitializationContext;
-import org.apache.flink.runtime.state.StateSnapshotContext;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
-import org.apache.flink.streaming.api.operators.BoundedOneInput;
-import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
-import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableImpl;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.Collector;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 
 public class SimpleClassificationEvaluator
         implements AlgoOperator<SimpleClassificationEvaluator>,
                     SimpleClassificationEvaluatorParams<SimpleClassificationEvaluator> {
     private final Map<Param<?>, Object> paramMap = new HashMap<>();
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleClassificationEvaluator.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(SimpleClassificationEvaluator.class);
 
     public SimpleClassificationEvaluator() {
         ParamUtils.initializeMapWithDefaultValues(paramMap, this);
@@ -55,22 +38,10 @@ public class SimpleClassificationEvaluator
         DataStream<Row> inputData = tEnv.toDataStream(inputs[0]);
         //m1)
         DataStream<Metrics> metricsData = inputData.map(new MetricsMapper());
-        metricsData.print();
-        //r1) Reduce没有成功地把数据变成一条
-//         metricsData.getTransformation().setParallelism(1);
-        DataStream<Metrics> reducedMetricsData = metricsData.keyBy(i -> 0).reduce(new MetricsReducer());
-//        DataStream<Metrics> reducedMetricsData = metricsData.transform(
-//                "reduce",
-//                TypeInformation.of(Metrics.class),
-//                new MetricsReducer());
-        reducedMetricsData.print();
-        List<Row> collected;
-        try {
-            collected = IteratorUtils.toList(reducedMetricsData.executeAndCollect());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        //
+//        metricsData.print();
+        //r2)
+        DataStream<Metrics> reducedMetricsData = DataStreamUtils.reduce(metricsData, new MetricsReducer());
+        //t1)变换为需要的指标。
         final String[] metricsNames = getMetricsNames();
         TypeInformation<?>[] metricTypes = new TypeInformation[metricsNames.length];
         Arrays.fill(metricTypes, Types.DOUBLE);
@@ -100,6 +71,7 @@ public class SimpleClassificationEvaluator
                     outputTypeInfo
                     //new RowTypeInfo(Types.DOUBLE, Types.DOUBLE, Types.DOUBLE, Types.DOUBLE, getMetricsNames())
                 );
+//        evalResult.print();
         return new Table[] { tEnv.fromDataStream(evalResult) };
     }
 
