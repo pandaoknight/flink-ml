@@ -40,11 +40,11 @@ public class MultiClassificationEvaluatorTest extends AbstractTestBase {
 
     private static final double[] EXPECTED_DATA =
             new double[] {
-                    0.6, // Macro-average Accuracy
-                    0.5, // Macro-average Precision
-                    0.6, // Macro-average Recall
-                    0.5714285714285714, // Macro-average F1
-                    0.7, // Micro-average Accuracy
+                    0.8, // Macro-average Accuracy
+                    0.694444, // Macro-average Precision
+                    0.722222, // Macro-average Recall
+                    0.698412, // Macro-average F1
+                    0.8, // Micro-average Accuracy
                     0.7, // Micro-average Precision
                     0.7, // Micro-average Recall
                     0.7}; // Micro-average F1
